@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  mineru:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    platform: linux/arm64
+    volumes:
+      # Mount source code excluding data directory
+      - ./magic_pdf:/app/MinerU/magic_pdf:ro
+      - ./scripts:/app/MinerU/scripts:ro
+      - ./requirements.txt:/app/MinerU/requirements.txt:ro
+      - ./magic-pdf.template.json:/app/MinerU/magic-pdf.template.json:ro
+      # Mount data directory with read-write access
+      - ./data:/app/MinerU/data:rw
+    environment:
+      - PYTORCH_ENABLE_MPS_FALLBACK=1
+      - PYTORCH_MPS_ENABLE_IF_AVAILABLE=1
+      - PYTHONPATH=/app/MinerU
+    deploy:
+      resources:
+        limits:
+          memory: 16G
+        reservations:
+          memory: 8G
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import torch; print(torch.__version__)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
